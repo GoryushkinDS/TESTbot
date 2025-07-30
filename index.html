@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заработок за день</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #FFA500; /* Оранжевый фон */
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Общие стили для обеих страниц */
+        .page {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            min-height: 80vh;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .active {
+            display: flex !important;
+        }
+        
+        h1, h2 {
+            color: #E65100;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #FF8C00, #FF5722);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(255, 140, 0, 0.4);
+        }
+        
+        /* Стили для страницы авторизации */
+        #auth-page {
+            text-align: center;
+        }
+        
+        .auth-description {
+            margin: 15px 0 25px;
+            color: #555;
+            font-size: 16px;
+        }
+        
+        .checkbox-group {
+            text-align: left;
+            margin: 25px 0;
+            padding: 15px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 10px;
+        }
+        
+        .checkbox-group label {
+            display: flex;
+            align-items: flex-start;
+            margin: 15px 0;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .checkbox-group input {
+            margin-right: 10px;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+        
+        .error-message {
+            color: #D32F2F;
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 25px;
+        }
+        
+        /* Стили для информационной страницы */
+        #dashboard-page {
+            padding: 25px;
+        }
+        
+        .user-card {
+            background: linear-gradient(to right, #FFF3E0, #FFECB3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .user-info {
+            margin-bottom: 8px;
+            display: flex;
+        }
+        
+        .user-info strong {
+            display: inline-block;
+            width: 140px;
+            color: #EF6C00;
+        }
+        
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .day-cell {
+            background: white;
+            border-radius: 8px;
+            padding: 10px 5px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+        
+        .day-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: #FFF8E1;
+        }
+        
+        .day-number {
+            font-weight: bold;
+            color: #FF8C00;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .day-value {
+            font-weight: bold;
+            font-size: 15px;
+        }
+        
+        .total-cell {
+            grid-column: span 7;
+            background: linear-gradient(to right, #FF8C00, #F57C00);
+            color: white;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);
+        }
+        
+        .logout-btn {
+            background: #F57C00;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Страница авторизации -->
+    <div id="auth-page" class="page active">
+        <h1>Авторизация</h1>
+        <p class="auth-description">Для получения данных по БОТ, необходимо авторизоваться по номеру телефона</p>
+        
+        <button id="auth-btn" disabled>Авторизоваться</button>
+        
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="agreement1">
+                Я согласен на обработку персональных данных
+            </label>
+            <label>
+                <input type="checkbox" id="agreement2">
+                Я понимаю что данные в итогах могут поменяться
+            </label>
+        </div>
+        
+        <div id="error-message" class="error-message"></div>
+    </div>
+    
+    <!-- Информационная страница -->
+    <div id="dashboard-page" class="page">
+        <h1 id="greeting">Здравствуйте, </h1>
+        
+        <div class="user-card">
+            <div class="user-info">
+                <strong>ФИО:</strong> <span id="full-name"></span>
+            </div>
+            <div class="user-info">
+                <strong>Номер телефона:</strong> <span id="phone"></span>
+            </div>
+            <div class="user-info">
+                <strong>Должность:</strong> <span id="position"></span>
+            </div>
+            <div class="user-info">
+                <strong>Итого часов:</strong> <span id="total-hours"></span>
+            </div>
+        </div>
+        
+        <h2>Дневные показатели</h2>
+        <div class="calendar" id="calendar"></div>
+        <div class="total-cell">ИТОГ: <span id="total-sum"></span></div>
+        
+        <button class="logout-btn" id="logout-btn">Выйти</button>
+    </div>
+
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.MainButton.hide();
+        
+        // Элементы страницы авторизации
+        const authPage = document.getElementById('auth-page');
+        const authBtn = document.getElementById('auth-btn');
+        const agreement1 = document.getElementById('agreement1');
+        const agreement2 = document.getElementById('agreement2');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Элементы информационной страницы
+        const dashboardPage = document.getElementById('dashboard-page');
+        const greeting = document.getElementById('greeting');
+        const fullName = document.getElementById('full-name');
+        const phone = document.getElementById('phone');
+        const position = document.getElementById('position');
+        const totalHours = document.getElementById('total-hours');
+        const calendar = document.getElementById('calendar');
+        const totalSum = document.getElementById('total-sum');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        // Проверка соглашений
+        function checkAgreements() {
+            authBtn.disabled = !(agreement1.checked && agreement2.checked);
+        }
+        
+        // Переключение страниц
+        function showPage(page) {
+            authPage.classList.remove('active');
+            dashboardPage.classList.remove('active');
+            page.classList.add('active');
+        }
+        
+        // Обработка авторизации
+        authBtn.addEventListener('click', () => {
+            tg.showPopup({
+                title: 'Доступ к контакту',
+                message: 'Для авторизации предоставьте ваш номер телефона',
+                buttons: [{ type: 'ok' }]
+            }, () => {
+                tg.requestContact((contact) => {
+                    const phone = contact.phone_number.replace('+', '').trim();
+                    
+                    // Эмуляция запроса к бэкенду
+                    errorMessage.textContent = '';
+                    simulateBackendAuth(phone);
+                });
+            });
+        });
+        
+        // Эмуляция бэкенда (в реальном приложении заменить на fetch)
+        function simulateBackendAuth(phone) {
+            // В реальном приложении здесь будет fetch к /auth
+            setTimeout(() => {
+                // Тестовые данные (заменить на реальный запрос)
+                const testData = {
+                    '79991234567': {
+                        full_name: 'Иванов Иван Иванович',
+                        phone: '79991234567',
+                        position: 'Менеджер',
+                        total_hours: '160 часов',
+                        daily_data: Array.from({length: 31}, (_, i) => (i + 1) * 100),
+                        total: '31,500 ₽'
+                    },
+                    '79998887766': {
+                        full_name: 'Петрова Анна Сергеевна',
+                        phone: '79998887766',
+                        position: 'Разработчик',
+                        total_hours: '176 часов',
+                        daily_data: Array.from({length: 31}, (_, i) => (i + 1) * 150),
+                        total: '46,500 ₽'
+                    }
+                };
+                
+                if (testData[phone]) {
+                    // Сохраняем пользователя
+                    localStorage.setItem('user', JSON.stringify(testData[phone]));
+                    showDashboard(testData[phone]);
+                } else {
+                    errorMessage.textContent = 'Номер телефона не найден';
+                }
+            }, 800);
+        }
+        
+        // Показать информационную панель
+        function showDashboard(user) {
+            greeting.textContent = `Здравствуйте, ${user.full_name}`;
+            fullName.textContent = user.full_name;
+            phone.textContent = user.phone;
+            position.textContent = user.position;
+            totalHours.textContent = user.total_hours;
+            totalSum.textContent = user.total;
+            
+            // Генерация календаря
+            calendar.innerHTML = '';
+            user.daily_data.forEach((value, index) => {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'day-cell';
+                dayCell.innerHTML = `
+                    <div class="day-number">${index + 1}</div>
+                    <div class="day-value">${value}</div>
+                `;
+                calendar.appendChild(dayCell);
+            });
+            
+            showPage(dashboardPage);
+        }
+        
+        // Выход из системы
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            agreement1.checked = false;
+            agreement2.checked = false;
+            checkAgreements();
+            showPage(authPage);
+        });
+        
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', () => {
+            // Проверяем сохраненного пользователя
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                showDashboard(JSON.parse(savedUser));
+            }
+            
+            // Настройка обработчиков
+            agreement1.addEventListener('change', checkAgreements);
+            agreement2.addEventListener('change', checkAgreements);
+        });
+    </script>
+</body>
+</html>
